@@ -1,6 +1,12 @@
-Quandl.auth_token <- NA
-Quandl.remaining_limit <- NA
+# Quandl.auth_token <- NA
+# Quandl.remaining_limit <- NA
+.onLoad <- function(libname, pkgname) {
+    options(Quandl.auth_token=NA, Quandl.remaining_limit=NA)
+}
 
+.onUnload <- function(libpath) {
+    options(Quandl.auth_token=NULL, Quandl.remaining_limit=NULL)
+}
 #' Query or set Quandl API token
 #' @param auth_token Optionally passed parameter to set Quandl \code{auth_token}.
 #' @return Returns invisibly the currently set \code{auth_token}.
@@ -12,9 +18,9 @@ Quandl.remaining_limit <- NA
 Quandl.auth <- function(auth_token) {
 
     if (!missing(auth_token))
-        assignInNamespace('Quandl.auth_token', auth_token, 'Quandl')
+        options(Quandl.auth_token = auth_token)
 
-    invisible(Quandl.auth_token)
+    invisible(getOption("Quandl.auth_token"))
 
 }
 
@@ -31,18 +37,18 @@ Quandl.auth <- function(auth_token) {
 #' @export
 Quandl.limit <- function(remaining_limit, force_check=FALSE) {
     if (!missing(remaining_limit)) {
-        assignInNamespace('Quandl.remaining_limit', remaining_limit, 'Quandl')
+        options(Quandl.remaining_limit = remaining_limit)
     }
-    else if (is.na(Quandl.remaining_limit) || force_check) {
+    else if (is.na(getOption("Quandl.remaining_limit")) || force_check) {
         headers <- basicHeaderGatherer()
         if (is.na(Quandl.auth()))
             getURL("http://www.quandl.com/api/v1/datasets/TAMMER/RANDOM.json?exclude_data=true", headerfunction = headers$update)
         else
             getURL(paste("http://www.quandl.com/api/v1/datasets/TAMMER/RANDOM.json?auth_token=", Quandl.auth(), "&exclude_data=true", sep=""), headerfunction = headers$update)
-        assignInNamespace('Quandl.remaining_limit', headers$value()[["X-RateLimit-Remaining"]], 'Quandl')
+        options(Quandl.remaining_limit = headers$value()[["X-RateLimit-Remaining"]])
     }
 
-    return(Quandl.remaining_limit)
+    return(getOption("Quandl.remaining_limit"))
 
 }
 
